@@ -10,7 +10,6 @@ class QueryRequest(BaseModel):
 
 class QueryResult(BaseModel):
     content: str
-    metadata: Dict[str,Any]
 
 class QueryResponse(BaseModel):
     query: str
