@@ -11,7 +11,8 @@ PG_CONNECTION_STRING = os.getenv("PG_CONNECTION_STRING")
 def get_embeddings():
     return GoogleGenerativeAIEmbeddings(
         model=os.getenv("GOOGLE_EMBEDDINGS_MODEL"),
-        api_key=os.getenv("GOOGLE_API_KEY")
+        api_key=os.getenv("GOOGLE_API_KEY"),
+        output_dimensionality=1536
     )
 
 #Used to store the embedding into the vector database
@@ -19,5 +20,6 @@ def get_vector_store(collection_name: str = "insurance_claim_collection"):
     return PGVector(
         collection_name=collection_name,
         connection=PG_CONNECTION_STRING,
-        embeddings=get_embeddings()
+        embeddings=get_embeddings(),
+        use_jsonb=True
     )    
