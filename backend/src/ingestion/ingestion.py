@@ -2,13 +2,13 @@ from unittest import loader
 from dotenv import load_dotenv
 import os
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import UnstructuredPDFLoader 
-from backend.src.core.db import get_vector_store
+from langchain_community.document_loaders import PyPDFLoader 
+from src.core.db import get_vector_store
 load_dotenv()
 PG_CONNECTION = os.getenv("PG_CONNECTION_STRING")
 def ingest_pdf(file_path):
     """Ingest a PDF file and save it in vector database"""
-    loader = UnstructuredPDFLoader(file_path)
+    loader = PyPDFLoader(file_path)
     docs = loader.load()
     print("Pages: "+str(len(docs)))
 
