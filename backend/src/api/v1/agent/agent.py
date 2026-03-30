@@ -6,6 +6,7 @@ from src.api.v1.services.query_services import QueryServices
 
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GOOGLE_LLM_MODEL = os.getenv("GOOGLE_LLM_MODEL")
 
 def retrieval_tool(query :str)->QueryResponse:
     """
@@ -18,7 +19,7 @@ def retrieval_tool(query :str)->QueryResponse:
 
 def run_rag_agent(request: QueryRequest)->str:
     agent = create_agent(
-        model = "google_genai:gemini-2.5-flash-lite",
+        model = GOOGLE_LLM_MODEL,
         system_prompt= """
             You are a helpful assistant.
 
