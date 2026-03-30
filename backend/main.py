@@ -1,0 +1,8 @@
+from fastapi import FastAPI
+from src.api.v1.routes.query_routes import router 
+
+app = FastAPI(title="RAG API")
+
+app.include_router(router,prefix="/api/v1")
+    
+
