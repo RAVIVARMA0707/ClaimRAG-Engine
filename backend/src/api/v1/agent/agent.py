@@ -1,7 +1,8 @@
 import os
 from langchain.agents import create_agent
+from langchain_google_genai.chat_models import ChatGoogleGenerativeAIError
 from dotenv import load_dotenv
-from src.api.v1.schemas.query_schema import QueryRequest
+from src.api.v1.schemas.query_schema import QueryRequest,QueryResponse
 from src.api.v1.services.query_services import QueryServices
 from src.api.v1.tools.vector_search_tool import vector_search
 from src.api.v1.tools.fts_search_tool import fts_search
@@ -11,7 +12,7 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GOOGLE_LLM_MODEL = os.getenv("GOOGLE_LLM_MODEL")
 
-def run_rag_agent(request: QueryRequest)->dict:
+def run_rag_agent(request: QueryRequest)->QueryResponse:
     agent = create_agent(
         model = GOOGLE_LLM_MODEL, 
         system_prompt = """
@@ -33,16 +34,48 @@ def run_rag_agent(request: QueryRequest)->dict:
         """,
         tools=[vector_search,fts_search,hybrid_search]
     )
-    response = agent.invoke(
-        {
-            "messages":[{
-                "role":"user","content":request.query
-            }]
-        }
-    )
+    try:
+        response = agent.invoke(
+            {
+                "messages":[{
+                    "role":"user","content":request.query
+                }]
+            },
+            config={
+                "tags" : ["insurance_agent"],
+                "metadata":{
+                    "user_id":"user_001",
+                    "feature":"insurance_claim_lookup",
+                    "env":"dev"
+                },
+                "run_name":"insurance_agent_run"
+            }       
+        )    
+        answer=QueryResponse
+        answer.result = response["messages"][-1].text 
+
+        #todo
+        # answer.doc_name
+        # answer.page
+        # answer.confidence
+
+        return answer
 
     
-    answer = response["messages"][-1].content
-    return QueryServices.format_results(request.query, answer)
+    except ChatGoogleGenerativeAIError as e:
+            if "RESOURCE_EXHAUSTED" in str(e):
+                return {
+                    "response": (
+                        "Currently I am experiencing high demand"
+                        " get back after sometime."
+                    )
+                }
+
+            # Other Google model errors
+            return {"response": f"Google model error: {str(e)}"}
+
+
+
+    # return QueryServices.format_results(request.query, answer)
 
 
