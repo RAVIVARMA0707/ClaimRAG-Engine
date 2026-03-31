@@ -2,6 +2,15 @@ from src.core.db import get_vector_store
 from src.api.v1.tools.fts_search_tool import fts_search
 
 def hybrid_search(query: str, k: int = 5) -> list[dict]:
+    """
+   Merge vector and FTS results using Reciprocal Rank Fusion (RRF).
+
+
+   RRF score for a chunk = sum of 1/(rank + 60) across both result lists.
+   Chunks appearing in both lists score higher than those in only one.
+   The constant 60 prevents top-ranked outliers from dominating.
+   """
+
     vector_store = get_vector_store()
 
     vector_docs = vector_store.similarity_search(query, k=k)

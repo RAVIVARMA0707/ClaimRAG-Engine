@@ -6,6 +6,6 @@ class QueryServices:
         Formats agent-retrieved context into a standard response.
         """
         return {
-            "query": query,
-            "results": context,
+    
+            "response": context,
         }
