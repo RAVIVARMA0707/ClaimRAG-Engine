@@ -1,75 +1,195 @@
 import streamlit as st
 import requests
+import os
 
-API_URL = "http://127.0.0.1:8000/api/v1/query/"
+# ---------------------------
+# API CONFIG
+# ---------------------------
+CHAT_API_URL = "http://localhost:8000/process-claim"
+UPLOAD_API_URL = "http://localhost:8000/upload-pdf"
 
+# ---------------------------
+# FUNCTION: SEND QUERY
+# ---------------------------
 def send_query(query, history):
     try:
         response = requests.post(
-            API_URL,
+            CHAT_API_URL,
             json={"query": query, "history": history}
         )
-        return response.json()["response"]
+        return response.json().get("response", "No response from API")
     except Exception as e:
         return f"Error: {str(e)}"
 
-# Page config
-st.set_page_config(page_title="AI Insurance Assistant", layout="wide")
-st.title("AI Insurance Claims Processing Assistant")
+# ---------------------------
+# PAGE CONFIG
+# ---------------------------
+st.set_page_config(
+    page_title="AI Insurance Assistant",
+    page_icon="🤖",
+    layout="wide"
+)
 
 # ---------------------------
-# SESSION STATE (MULTI-CHAT)
-# ---------------------------
-if "chat_sessions" not in st.session_state:
-    st.session_state.chat_sessions = {}
-
-if "current_chat" not in st.session_state:
-    st.session_state.current_chat = "Chat 1"
-
-if "Chat 1" not in st.session_state.chat_sessions:
-    st.session_state.chat_sessions["Chat 1"] = []
-
-# ---------------------------
-# SIDEBAR
+# SIDEBAR NAVIGATION
 # ---------------------------
 with st.sidebar:
-    st.title("💬 Chat History")
+    st.title("🧠 AI Assistant")
 
-    if st.button("➕ New Chat"):
-        new_chat = f"Chat {len(st.session_state.chat_sessions) + 1}"
-        st.session_state.chat_sessions[new_chat] = []
-        st.session_state.current_chat = new_chat
+    page = st.radio(
+        "Navigation",
+        ["💬 Chat", "🛠️ Admin"]
+    )
 
-    for chat in st.session_state.chat_sessions:
-        if st.button(chat):
-            st.session_state.current_chat = chat
+    st.divider()
 
-# ---------------------------
-# LOAD CURRENT CHAT
-# ---------------------------
-current_chat = st.session_state.current_chat
-messages = st.session_state.chat_sessions[current_chat]
+# =========================================================
+# 💬 CHAT PAGE
+# =========================================================
+if page == "💬 Chat":
 
-# ---------------------------
-# DISPLAY MESSAGES
-# ---------------------------
-for msg in messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+    st.title("AI Insurance Claims Processing Assistant")
 
-# ---------------------------
-# USER INPUT
-# ---------------------------
-user_input = st.chat_input("Enter claim details or ask a question...")
+    # ---------------------------
+    # SESSION STATE (MULTI-CHAT)
+    # ---------------------------
+    if "chat_sessions" not in st.session_state:
+        st.session_state.chat_sessions = {}
 
-if user_input:
-    messages.append({"role": "user", "content": user_input})
+    if "current_chat" not in st.session_state:
+        st.session_state.current_chat = "Chat 1"
 
-    with st.chat_message("user"):
-        st.markdown(user_input)
+    if "Chat 1" not in st.session_state.chat_sessions:
+        st.session_state.chat_sessions["Chat 1"] = []
 
-    with st.chat_message("assistant"):
-        response = send_query(user_input, messages)
-        st.markdown(response)
+    # ---------------------------
+    # CHAT SIDEBAR (HISTORY)
+    # ---------------------------
+    with st.sidebar:
+        st.markdown("### 💬 Chats")
 
-    messages.append({"role": "assistant", "content": response})
+        if st.button("➕ New Chat"):
+            new_chat = f"Chat {len(st.session_state.chat_sessions) + 1}"
+            st.session_state.chat_sessions[new_chat] = []
+            st.session_state.current_chat = new_chat
+
+        for chat in st.session_state.chat_sessions:
+            if st.button(f"📁 {chat}"):
+                st.session_state.current_chat = chat
+
+    # ---------------------------
+    # LOAD CURRENT CHAT
+    # ---------------------------
+    current_chat = st.session_state.current_chat
+    messages = st.session_state.chat_sessions[current_chat]
+
+    st.markdown(f"### 💬 {current_chat}")
+    st.divider()
+
+    # ---------------------------
+    # DISPLAY MESSAGES
+    # ---------------------------
+    if len(messages) == 0:
+        st.info("👋 Start a conversation...")
+
+    for msg in messages:
+        with st.chat_message(msg["role"], avatar="👤" if msg["role"] == "user" else "🤖"):
+            st.markdown(msg["content"])
+
+    # ---------------------------
+    # USER INPUT
+    # ---------------------------
+    user_input = st.chat_input("Enter claim details or ask a question...")
+
+    if user_input:
+        # Save user message
+        messages.append({"role": "user", "content": user_input})
+
+        with st.chat_message("user", avatar="👤"):
+            st.markdown(user_input)
+
+        # Get AI response
+        with st.chat_message("assistant", avatar="🤖"):
+            with st.spinner("Thinking... 🤔"):
+                response = send_query(user_input, messages)
+            st.markdown(response)
+
+        # Save response
+        messages.append({"role": "assistant", "content": response})
+
+# =========================================================
+# 🛠️ ADMIN PAGE
+# =========================================================
+elif page == "🛠️ Admin":
+
+    st.title("🛠️ Admin Dashboard")
+
+    # ---------------------------
+    # ADMIN AUTH (BASIC)
+    # ---------------------------
+    password = st.text_input("Enter Admin Password", type="password")
+
+    if password != "admin123":
+        st.warning("🔒 Admin access only")
+        st.stop()
+
+    st.success("✅ Access Granted")
+
+    st.divider()
+
+    # ---------------------------
+    # FILE UPLOAD
+    # ---------------------------
+    st.markdown("### 📄 Upload Insurance Documents")
+
+    uploaded_file = st.file_uploader(
+        "Upload PDF",
+        type=["pdf"]
+    )
+
+    if uploaded_file:
+        st.success(f"Selected: {uploaded_file.name}")
+
+        if st.button("🚀 Upload"):
+            try:
+                with st.spinner("Uploading..."):
+
+                    files = {
+                        "file": (
+                            uploaded_file.name,
+                            uploaded_file,
+                            "application/pdf"
+                        )
+                    }
+
+                    response = requests.post(
+                        UPLOAD_API_URL,
+                        files=files
+                    )
+
+                    if response.status_code == 200:
+                        st.success("✅ File uploaded successfully!")
+                    else:
+                        st.error("❌ Upload failed!")
+
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
+
+    # ---------------------------
+    # SHOW UPLOADED FILES (LOCAL)
+    # ---------------------------
+    st.divider()
+    st.markdown("### 📂 Uploaded Files")
+
+    upload_folder = "uploads"
+
+    if os.path.exists(upload_folder):
+        files = os.listdir(upload_folder)
+
+        if files:
+            for f in files:
+                st.write(f"• {f}")
+        else:
+            st.info("No files uploaded yet.")
+    else:
+        st.info("Upload folder not found.")
