@@ -5,8 +5,9 @@ import os
 # ---------------------------
 # API CONFIG
 # ---------------------------
-CHAT_API_URL = "http://localhost:8000/process-claim"
-UPLOAD_API_URL = "http://localhost:8000/upload-pdf"
+
+CHAT_API_URL = "http://127.0.0.1:8000/api/v1/query/"
+UPLOAD_API_URL = "http://127.0.0.1:8000/api/v1/upload-pdf"
 
 # ---------------------------
 # FUNCTION: SEND QUERY
