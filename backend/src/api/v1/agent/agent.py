@@ -2,7 +2,7 @@ import os
 from langchain.agents import create_agent
 from langchain_google_genai.chat_models import ChatGoogleGenerativeAIError
 from dotenv import load_dotenv
-from src.api.v1.schemas.query_schema import QueryRequest
+from src.api.v1.schemas.query_schema import QueryRequest,QueryResponse
 from src.api.v1.services.query_services import QueryServices
 from src.api.v1.tools.vector_search_tool import vector_search
 from src.api.v1.tools.fts_search_tool import fts_search
@@ -12,7 +12,7 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GOOGLE_LLM_MODEL = os.getenv("GOOGLE_LLM_MODEL")
 
-def run_rag_agent(request: QueryRequest)->dict:
+def run_rag_agent(request: QueryRequest)->QueryResponse:
     agent = create_agent(
         model = GOOGLE_LLM_MODEL, 
         system_prompt = """
@@ -51,7 +51,15 @@ def run_rag_agent(request: QueryRequest)->dict:
                 "run_name":"insurance_agent_run"
             }       
         )    
-        answer = response["messages"][-1].text
+        answer=QueryResponse
+        answer.result = response["messages"][-1].text 
+
+        #todo
+        # answer.doc_name
+        # answer.page
+        # answer.confidence
+
+        return answer
 
     
     except ChatGoogleGenerativeAIError as e:
