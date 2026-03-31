@@ -11,25 +11,26 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GOOGLE_LLM_MODEL = os.getenv("GOOGLE_LLM_MODEL")
 
-def run_rag_agent(request: QueryRequest)->str:
+def run_rag_agent(request: QueryRequest)->dict:
     agent = create_agent(
-        model = GOOGLE_LLM_MODEL,
-        system_prompt= """
-            You are a helpful assistant.
+        model = GOOGLE_LLM_MODEL, 
+        system_prompt = """
+            You are a retrieval-augmented assistant.
 
             You MUST follow these rules:
-            1. ALWAYS call the tool retrieve_context before answering
+            1. You MUST call exactly ONE retrieval tool before answering.
             2. Decide the best tool based on the query intent:
                 - fts_search → IDs, codes, keywords, error numbers
-                - hybrid_search → short or mixed queries
+                - hybrid_search → short, ambiguous, or mixed queries
                 - vector_search → natural language or long questions
-            3. You MUST use exactly ONE retrieval tool before answering.
-            4. NEVER answer without using the tool
-            5. Use ONLY the retrieved context
-            6. If answer is not found, say: "Answer not found in documents"
+            3. NEVER answer without calling a retrieval tool.
+            4. Use ONLY the content returned by the tool.
+            5. Do NOT use prior knowledge.
+            6. If the answer is not found in the retrieved context, say exactly:
+               "Answer not found in documents"
 
             Be precise and concise.
-            """,
+        """,
         tools=[vector_search,fts_search,hybrid_search]
     )
     response = agent.invoke(
