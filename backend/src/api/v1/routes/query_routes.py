@@ -6,6 +6,6 @@ router = APIRouter()
 
 
 
-@router.post("/query",response_model=str)
+@router.post("/query")
 def query_endpoint(request: QueryRequest):
     return run_rag_agent(request)
