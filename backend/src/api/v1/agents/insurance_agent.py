@@ -3,7 +3,6 @@ from langchain.agents import create_agent
 from langchain_google_genai.chat_models import ChatGoogleGenerativeAIError
 from dotenv import load_dotenv
 from src.api.v1.schemas.query_schema import QueryRequest,QueryResponse
-from src.api.v1.services.query_services import QueryServices
 from src.api.v1.tools.vector_search_tool import vector_search
 from src.api.v1.tools.fts_search_tool import fts_search
 from src.api.v1.tools.hybrid_search_tool import hybrid_search

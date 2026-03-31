@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader 
-from src.core.db import get_vector_store
+from src.core.db import get_vector_store, setup_fts_index
 load_dotenv()
 PG_CONNECTION = os.getenv("PG_CONNECTION_STRING")
 def ingest_pdf(file_path):
@@ -39,8 +39,14 @@ def ingest_pdf(file_path):
     vector_store = get_vector_store(collection_name="insurance_claim_collection")
 
     vector_store.add_documents(chunks)
-    print("Ingestion completed successfully!")
 
-if __name__ == "__main__":
-    ingest_pdf(r"data\Insurance_claim.pdf")
+    result = "Chunks: "+str(len(chunks))+"\nIngestion completed successfully!"
+
+    setup_fts_index()
+    
+    return result
+    
+
+
+    
 

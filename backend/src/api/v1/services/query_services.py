@@ -1,11 +1,39 @@
-class QueryServices:
+import os
+import shutil
+from pathlib import Path
+from fastapi import UploadFile,File
+from src.ingestion.ingestion import ingest_pdf
+from src.api.v1.schemas.query_schema import QueryRequest
+from src.api.v1.agents.insurance_agent import run_rag_agent 
 
-    @staticmethod
-    def format_results(query: str, context: str) -> dict:
-        """
-        Formats agent-retrieved context into a standard response.
-        """
+class QueryServices:    
+
+    DATA_DIR = Path("data")
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+    file_path = DATA_DIR / "Insurance_claim.pdf"
+
+    @classmethod
+    def upload_file(cls,file: UploadFile = File(...)):    
+
+        with open(cls.file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
         return {
-    
-            "response": context,
+            "message": "File uploaded successfully",
+            "saved_to": str(cls.file_path)
         }
+
+    @classmethod
+    def ingestion(cls):
+
+        message = ingest_pdf(str(cls.FILE_PATH))
+
+        return {
+            "message": message
+        }
+    
+    @staticmethod
+    def run_rag_agent(request: QueryRequest)->dict:
+        return run_rag_agent(request)
+
