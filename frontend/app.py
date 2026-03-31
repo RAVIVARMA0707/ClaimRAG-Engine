@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_URL = "http://localhost:8000/process-claim"
+API_URL = "http://127.0.0.1:8000/api/v1/query/"
 
 def send_query(query, history):
     try:
