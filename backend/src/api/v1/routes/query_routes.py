@@ -7,5 +7,5 @@ router = APIRouter()
 
 
 @router.post("/query")
-def query_endpoint(request: QueryRequest):
+def query_endpoint(request: QueryRequest)->dict:
     return run_rag_agent(request)
