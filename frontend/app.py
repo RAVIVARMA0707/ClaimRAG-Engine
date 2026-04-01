@@ -12,7 +12,9 @@ UPLOAD_API_URL = "http://127.0.0.1:8000/api/v1/upload-pdf"
 # ---------------------------
 # SAMPLE JSON
 # ---------------------------
-sample_json = """"claim_details": {
+sample_json = """
+{
+  "claim_details": {
     "claim_id": "CLM001",
     "policy_id": "POL00234",
     "claim_type": "Motor",
@@ -23,10 +25,11 @@ sample_json = """"claim_details": {
     "idv": 800000,
     "deductible": 10000,
     "previous_claims_90_days": 2,
-    "documents_submitted": [ "Policy Copy", "Repair Estimate"],
+    "documents_submitted": ["Policy Copy", "Repair Estimate"],
     "policy_status": "Active"
-}"""
-
+  }
+}
+"""
 # ---------------------------
 # FUNCTION: SEND QUERY
 # ---------------------------
@@ -153,7 +156,7 @@ if page == "Chat":
         with st.chat_message("assistant"):
             with st.spinner("Thinking... 🤔"):
 
-                response_json = send_query(user_input, messages, insurance_data)
+                response_json = send_query(user_input, insurance_data)
 
                 if "error" in response_json:
                     st.error(response_json["error"])

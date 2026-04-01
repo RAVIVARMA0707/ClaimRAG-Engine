@@ -6,7 +6,9 @@ router = APIRouter()
 
 @router.post("/query",response_model=QueryResponse)
 def query_endpoint(request: QueryRequest):
+    print(request.insurance_data)
     return QueryServices.run_rag_agent(request)
+
 
 @router.post("/upload-pdf")
 def upload_file(file: UploadFile = File(...)):
