@@ -2,6 +2,7 @@ import os
 from langchain.agents import create_agent
 from langchain_google_genai.chat_models import ChatGoogleGenerativeAIError
 from dotenv import load_dotenv
+import json
 from src.api.v1.schemas.query_schema import QueryRequest,QueryResponse
 from src.api.v1.tools.vector_search_tool import vector_search
 from src.api.v1.tools.fts_search_tool import fts_search
@@ -36,9 +37,24 @@ def run_rag_agent(request: QueryRequest)->QueryResponse:
     try:
         response = agent.invoke(
             {
-                "messages":[{
-                    "role":"user","content":request.query
-                }]
+                "messages":[
+                     {
+                        "role": "system",
+                        "content": f"""
+                        User Insurance Profile (JSON):
+                        {json.dumps(request.insurance, indent=2)}
+
+                        IMPORTANT:
+                        - This data belongs to the user
+                        - Use it ONLY for reasoning and comparison
+                        - Do NOT invent missing fields
+                        """
+                     },
+                     {
+                           "role":"user","content":request.query
+                     }
+                ]
+
             },
             config={
                 "tags" : ["insurance_agent"],
@@ -52,11 +68,6 @@ def run_rag_agent(request: QueryRequest)->QueryResponse:
         )    
         
         answer = response["messages"][-1].text 
-
-        #todo
-        # answer.doc_name
-        # answer.page
-        # answer.confidence
 
         return QueryResponse(
             response = answer

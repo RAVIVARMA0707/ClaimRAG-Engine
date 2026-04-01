@@ -10,6 +10,27 @@ CHAT_API_URL = "http://127.0.0.1:8000/api/v1/query/"
 UPLOAD_API_URL = "http://127.0.0.1:8000/api/v1/upload-pdf"
 
 # ---------------------------
+# SAMPLE JSON
+# ---------------------------
+sample_json = """
+{
+  "claim_details": {
+    "claim_id": "CLM001",
+    "policy_id": "POL00234",
+    "claim_type": "Motor",
+    "incident_type": "Repair",
+    "incident_date": "2026-02-10",
+    "reported_delay_days": 2,
+    "estimated_damage": 300000,
+    "idv": 800000,
+    "deductible": 10000,
+    "previous_claims_90_days": 2,
+    "documents_submitted": ["Policy Copy", "Repair Estimate"],
+    "policy_status": "Active"
+  }
+}
+"""
+# ---------------------------
 # FUNCTION: SEND QUERY
 # ---------------------------
 def send_query(query, history):
@@ -112,11 +133,26 @@ if page == "💬 Chat":
         # Get AI response
         with st.chat_message("assistant", avatar="🤖"):
             with st.spinner("Thinking... 🤔"):
-                response = send_query(user_input, messages)
-            st.markdown(response)
 
-        # Save response
-        messages.append({"role": "assistant", "content": response})
+                response_json = send_query(user_input, insurance_data)
+
+                if "error" in response_json:
+                    st.error(response_json["error"])
+                    response_text = response_json["error"]
+                else:
+                    main_text = response_json.get("response", "")
+                    page_no = response_json.get("page")
+                    doc_name = response_json.get("doc_name")
+                    confidence = response_json.get("confidence")
+
+                    meta = f"\n\n📄 Page: {page_no} | Doc: {doc_name}" if page_no else ""
+                    conf = f"\n🎯 Confidence: {confidence}" if confidence else ""
+
+                    response_text = f"{main_text}{meta}{conf}"
+
+                    st.markdown(response_text)
+
+        messages.append({"role": "assistant", "content": response_text})
 
 # =========================================================
 # 🛠️ ADMIN PAGE

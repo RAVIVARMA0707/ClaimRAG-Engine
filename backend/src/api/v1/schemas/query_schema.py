@@ -3,10 +3,7 @@ from typing import List, Dict, Any, Optional
 
 class QueryRequest(BaseModel):
     query: str =  Field(...,description="User query")
-    category: Optional[str] = Field(
-        default=None,
-        description="Optional metadata filter"
-    )
+    insurance_data: dict
 
 class QueryResponse(BaseModel):
     response: str 
