@@ -50,15 +50,17 @@ def run_rag_agent(request: QueryRequest)->QueryResponse:
                 "run_name":"insurance_agent_run"
             }       
         )    
-        answer=QueryResponse
-        answer.result = response["messages"][-1].text 
+        
+        answer = response["messages"][-1].text 
 
         #todo
         # answer.doc_name
         # answer.page
         # answer.confidence
 
-        return answer
+        return QueryResponse(
+            response = answer
+        )
 
     
     except ChatGoogleGenerativeAIError as e:
@@ -72,9 +74,4 @@ def run_rag_agent(request: QueryRequest)->QueryResponse:
 
             # Other Google model errors
             return {"response": f"Google model error: {str(e)}"}
-
-
-
-    # return QueryServices.format_results(request.query, answer)
-
 

@@ -173,15 +173,10 @@ dependencies = [
     { name = "langchain-google-genai" },
     { name = "langchain-postgres" },
     { name = "langchain-text-splitters" },
-<<<<<<< HEAD
     { name = "psycopg2" },
     { name = "pypdf" },
     { name = "python-dotenv" },
     { name = "python-multipart" },
-=======
-    { name = "pypdf" },
-    { name = "python-dotenv" },
->>>>>>> origin/dev
     { name = "uvicorn" },
 ]
 
@@ -193,15 +188,10 @@ requires-dist = [
     { name = "langchain-google-genai", specifier = ">=4.2.1" },
     { name = "langchain-postgres", specifier = ">=0.0.17" },
     { name = "langchain-text-splitters", specifier = ">=1.1.1" },
-<<<<<<< HEAD
     { name = "psycopg2", specifier = ">=2.9.11" },
     { name = "pypdf", specifier = ">=6.9.2" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
     { name = "python-multipart", specifier = ">=0.0.22" },
-=======
-    { name = "pypdf", specifier = ">=6.9.2" },
-    { name = "python-dotenv", specifier = ">=1.2.2" },
->>>>>>> origin/dev
     { name = "uvicorn", specifier = ">=0.42.0" },
 ]
 
@@ -1223,7 +1213,6 @@ wheels = [
 ]
 
 [[package]]
-<<<<<<< HEAD
 name = "psycopg2"
 version = "2.9.11"
 source = { registry = "https://pypi.org/simple" }
@@ -1234,8 +1223,6 @@ wheels = [
 ]
 
 [[package]]
-=======
->>>>>>> origin/dev
 name = "pyasn1"
 version = "0.6.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1366,7 +1353,6 @@ wheels = [
 ]
 
 [[package]]
-<<<<<<< HEAD
 name = "python-multipart"
 version = "0.0.22"
 source = { registry = "https://pypi.org/simple" }
@@ -1376,8 +1362,6 @@ wheels = [
 ]
 
 [[package]]
-=======
->>>>>>> origin/dev
 name = "pyyaml"
 version = "6.0.3"
 source = { registry = "https://pypi.org/simple" }
