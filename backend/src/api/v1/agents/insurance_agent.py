@@ -1,4 +1,6 @@
 import os
+import json
+import re
 from langchain.agents import create_agent
 from langchain_google_genai.chat_models import ChatGoogleGenerativeAIError
 from dotenv import load_dotenv
@@ -11,6 +13,21 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GOOGLE_LLM_MODEL = os.getenv("GOOGLE_LLM_MODEL")
 
+def parse_agent_json(raw_output: str) -> dict:
+    if not raw_output or not raw_output.strip():
+        raise ValueError("Empty agent output")
+
+    cleaned = raw_output.strip()
+
+    # Remove markdown code fences if present
+    cleaned = re.sub(
+        r"^```(?:json)?\s*|\s*```$",
+        "",
+        cleaned,
+        flags=re.IGNORECASE
+    ).strip()
+
+    return json.loads(cleaned)
 def run_rag_agent(request: QueryRequest)->QueryResponse:
     agent = create_agent(
         model = GOOGLE_LLM_MODEL, 
@@ -28,8 +45,14 @@ def run_rag_agent(request: QueryRequest)->QueryResponse:
             5. Do NOT use prior knowledge.
             6. If the answer is not found in the retrieved context, say exactly:
                "Answer not found in documents"
-
-            Be precise and concise.
+            7. You MUST return your final answer in **valid JSON**:
+                {
+                    "answer": "<string>",
+                    "source": "<string>",
+                    "page": "<string>"
+                }
+            8. Choose the doc/page from the MOST relevant chunk.
+            9. Be precise and concise.
         """,
         tools=[vector_search,fts_search,hybrid_search]
     )
@@ -51,17 +74,19 @@ def run_rag_agent(request: QueryRequest)->QueryResponse:
             }       
         )    
         
-        answer = response["messages"][-1].text 
+        raw_output = response["messages"][-1].text
+        print("RAW OUTPUT FROM AGENT ↓↓↓")
+        print(repr(raw_output))
+        data = parse_agent_json(raw_output)
 
-        #todo
-        # answer.doc_name
-        # answer.page
-        # answer.confidence
+        confidence = round(min(0.9, 0.4 + len(data["answer"]) / 200), 2)
 
         return QueryResponse(
-            response = answer
+            response=data["answer"],
+            doc_name=data.get("source"),
+            page=data.get("page"),
+            confidence=str(confidence)
         )
-
     
     except ChatGoogleGenerativeAIError as e:
             if "RESOURCE_EXHAUSTED" in str(e):

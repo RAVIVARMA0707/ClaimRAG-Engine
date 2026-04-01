@@ -19,7 +19,7 @@ def ingest_pdf(file_path):
             "document_extension":"pdf",
             "page":doc.metadata.get("page",None),
             "category":"hr_support_desk",
-            "last_updated":os.path.getmtime(file_path)
+            "last_updated":os.path.getmtime(file_path),
         })
 
     splitter = RecursiveCharacterTextSplitter(
