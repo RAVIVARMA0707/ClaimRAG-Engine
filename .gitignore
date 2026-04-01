@@ -1,5 +1,17 @@
+# Virtual environments
 .env
+*.env
 venv/
 .venv/
+<<<<<<< HEAD
 __pycache__/
+=======
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$.py.class
+
+# Compiled files
+>>>>>>> dev
 *.pyc

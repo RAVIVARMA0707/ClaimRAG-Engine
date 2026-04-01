@@ -8,9 +8,8 @@ class QueryRequest(BaseModel):
         description="Optional metadata filter"
     )
 
-class QueryResult(BaseModel):
-    content: str
-
 class QueryResponse(BaseModel):
-    query: str
-    results: List[QueryResult]
+    response: str 
+    page:Optional[str] = None
+    doc_name:Optional[str] = None
+    confidence:Optional[str] = None
