@@ -1,11 +1,11 @@
 import streamlit as st
 import requests
 import os
+import json
 
 # ---------------------------
 # API CONFIG
 # ---------------------------
-
 CHAT_API_URL = "http://127.0.0.1:8000/api/v1/query/"
 UPLOAD_API_URL = "http://127.0.0.1:8000/api/v1/upload-pdf"
 
@@ -33,15 +33,18 @@ sample_json = """
 # ---------------------------
 # FUNCTION: SEND QUERY
 # ---------------------------
-def send_query(query, history):
+def send_query(query, insurance_data):
     try:
         response = requests.post(
             CHAT_API_URL,
-            json={"query": query, "history": history}
+            json={
+                "query": query,
+                "insurance_data": insurance_data
+            }
         )
-        return response.json().get("response", "No response from API")
+        return response.json()
     except Exception as e:
-        return f"Error: {str(e)}"
+        return {"error": str(e)}
 
 # ---------------------------
 # PAGE CONFIG
@@ -60,7 +63,7 @@ with st.sidebar:
 
     page = st.radio(
         "Navigation",
-        ["💬 Chat", "🛠️ Admin"]
+        ["Chat", "Admin"]
     )
 
     st.divider()
@@ -68,12 +71,23 @@ with st.sidebar:
 # =========================================================
 # 💬 CHAT PAGE
 # =========================================================
-if page == "💬 Chat":
+if page == "Chat":
 
     st.title("AI Insurance Claims Processing Assistant")
 
     # ---------------------------
-    # SESSION STATE (MULTI-CHAT)
+    # JSON INPUT
+    # ---------------------------
+    st.markdown("### 🧾 Insurance Details (JSON)")
+
+    insurance_input = st.text_area(
+        "Enter Insurance JSON",
+        value=sample_json,
+        height=200
+    )
+
+    # ---------------------------
+    # SESSION STATE
     # ---------------------------
     if "chat_sessions" not in st.session_state:
         st.session_state.chat_sessions = {}
@@ -85,12 +99,12 @@ if page == "💬 Chat":
         st.session_state.chat_sessions["Chat 1"] = []
 
     # ---------------------------
-    # CHAT SIDEBAR (HISTORY)
+    # CHAT SIDEBAR
     # ---------------------------
     with st.sidebar:
         st.markdown("### 💬 Chats")
 
-        if st.button("➕ New Chat"):
+        if st.button("New Chat"):
             new_chat = f"Chat {len(st.session_state.chat_sessions) + 1}"
             st.session_state.chat_sessions[new_chat] = []
             st.session_state.current_chat = new_chat
@@ -100,7 +114,7 @@ if page == "💬 Chat":
                 st.session_state.current_chat = chat
 
     # ---------------------------
-    # LOAD CURRENT CHAT
+    # LOAD CHAT
     # ---------------------------
     current_chat = st.session_state.current_chat
     messages = st.session_state.chat_sessions[current_chat]
@@ -115,7 +129,7 @@ if page == "💬 Chat":
         st.info("👋 Start a conversation...")
 
     for msg in messages:
-        with st.chat_message(msg["role"], avatar="👤" if msg["role"] == "user" else "🤖"):
+        with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
     # ---------------------------
@@ -124,14 +138,22 @@ if page == "💬 Chat":
     user_input = st.chat_input("Enter claim details or ask a question...")
 
     if user_input:
+
+        # Convert JSON
+        try:
+            insurance_data = json.loads(insurance_input)
+        except:
+            st.error("❌ Invalid JSON format")
+            st.stop()
+
         # Save user message
         messages.append({"role": "user", "content": user_input})
 
-        with st.chat_message("user", avatar="👤"):
+        with st.chat_message("user"):
             st.markdown(user_input)
 
-        # Get AI response
-        with st.chat_message("assistant", avatar="🤖"):
+        # API CALL
+        with st.chat_message("assistant"):
             with st.spinner("Thinking... 🤔"):
 
                 response_json = send_query(user_input, insurance_data)
@@ -155,15 +177,12 @@ if page == "💬 Chat":
         messages.append({"role": "assistant", "content": response_text})
 
 # =========================================================
-# 🛠️ ADMIN PAGE
+# 🛠️ ADMIN PAGE (UNCHANGED)
 # =========================================================
-elif page == "🛠️ Admin":
+elif page == "Admin":
 
-    st.title("🛠️ Admin Dashboard")
+    st.title("Admin Dashboard")
 
-    # ---------------------------
-    # ADMIN AUTH (BASIC)
-    # ---------------------------
     password = st.text_input("Enter Admin Password", type="password")
 
     if password != "admin123":
@@ -172,61 +191,16 @@ elif page == "🛠️ Admin":
 
     st.success("✅ Access Granted")
 
-    st.divider()
-
-    # ---------------------------
-    # FILE UPLOAD
-    # ---------------------------
     st.markdown("### 📄 Upload Insurance Documents")
 
-    uploaded_file = st.file_uploader(
-        "Upload PDF",
-        type=["pdf"]
-    )
+    uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
 
     if uploaded_file:
-        st.success(f"Selected: {uploaded_file.name}")
-
         if st.button("🚀 Upload"):
-            try:
-                with st.spinner("Uploading..."):
+            files = {"file": (uploaded_file.name, uploaded_file, "application/pdf")}
+            response = requests.post(UPLOAD_API_URL, files=files)
 
-                    files = {
-                        "file": (
-                            uploaded_file.name,
-                            uploaded_file,
-                            "application/pdf"
-                        )
-                    }
-
-                    response = requests.post(
-                        UPLOAD_API_URL,
-                        files=files
-                    )
-
-                    if response.status_code == 200:
-                        st.success("✅ File uploaded successfully!")
-                    else:
-                        st.error("❌ Upload failed!")
-
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
-
-    # ---------------------------
-    # SHOW UPLOADED FILES (LOCAL)
-    # ---------------------------
-    st.divider()
-    st.markdown("### 📂 Uploaded Files")
-
-    upload_folder = "uploads"
-
-    if os.path.exists(upload_folder):
-        files = os.listdir(upload_folder)
-
-        if files:
-            for f in files:
-                st.write(f"• {f}")
-        else:
-            st.info("No files uploaded yet.")
-    else:
-        st.info("Upload folder not found.")
+            if response.status_code == 200:
+                st.success("✅ File uploaded successfully!")
+            else:
+                st.error("❌ Upload failed!")

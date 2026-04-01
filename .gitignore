@@ -3,6 +3,9 @@
 *.env
 venv/
 .venv/
+<<<<<<< HEAD
+__pycache__/
+=======
 
 # Python cache
 __pycache__/
@@ -10,4 +13,5 @@ __pycache__/
 *$.py.class
 
 # Compiled files
+>>>>>>> dev
 *.pyc
