@@ -2,10 +2,11 @@ from unittest import loader
 from dotenv import load_dotenv
 import os
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_google_genai.chat_models import ChatGoogleGenerativeAIError
 from langchain_community.document_loaders import PyPDFLoader 
 from src.core.db import get_vector_store, setup_fts_index
-load_dotenv()
-PG_CONNECTION = os.getenv("PG_CONNECTION_STRING")
+load_dotenv(override=True)
+
 def ingest_pdf(file_path):
     """Ingest a PDF file and save it in vector database"""
     loader = PyPDFLoader(file_path)

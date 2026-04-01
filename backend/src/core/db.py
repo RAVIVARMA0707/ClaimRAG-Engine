@@ -8,6 +8,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 load_dotenv()
 
 PG_CONNECTION_STRING = os.getenv("PG_CONNECTION_STRING")
+PG_CONNECTION = os.getenv("PG_CONNECTION")
 
 #Used to craete a embeddings for a Chunks
 def get_embeddings():
@@ -28,7 +29,7 @@ def get_vector_store(collection_name: str = "insurance_claim_collection"):
 
 
 def setup_fts_index():
-    conn = psycopg2.connect(PG_CONNECTION_STRING)
+    conn = psycopg2.connect(PG_CONNECTION)
     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cursor = conn.cursor()
 

@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 from fastapi import UploadFile,File
 from src.ingestion.ingestion import ingest_pdf
-from src.api.v1.schemas.query_schema import QueryRequest
+from src.api.v1.schemas.query_schema import QueryRequest,QueryResponse
 from src.api.v1.agents.insurance_agent import run_rag_agent 
 
 class QueryServices:    
@@ -19,21 +19,14 @@ class QueryServices:
         with open(cls.file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
+        ingest_pdf(str(cls.file_path))
+
         return {
-            "message": "File uploaded successfully",
+            "message": "File uploaded and ingested successfully",
             "saved_to": str(cls.file_path)
-        }
-
-    @classmethod
-    def ingestion(cls):
-
-        message = ingest_pdf(str(cls.FILE_PATH))
-
-        return {
-            "message": message
         }
     
     @staticmethod
-    def run_rag_agent(request: QueryRequest)->dict:
+    def run_rag_agent(request: QueryRequest)->QueryResponse:
         return run_rag_agent(request)
 
