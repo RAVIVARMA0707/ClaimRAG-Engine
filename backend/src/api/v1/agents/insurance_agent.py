@@ -4,11 +4,11 @@ import re
 from langchain.agents import create_agent
 from langchain_google_genai.chat_models import ChatGoogleGenerativeAIError
 from dotenv import load_dotenv
-import json
 from src.api.v1.schemas.query_schema import QueryRequest,QueryResponse
 from src.api.v1.tools.vector_search_tool import vector_search
 from src.api.v1.tools.fts_search_tool import fts_search
 from src.api.v1.tools.hybrid_search_tool import hybrid_search
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -33,27 +33,51 @@ def run_rag_agent(request: QueryRequest)->QueryResponse:
     agent = create_agent(
         model = GOOGLE_LLM_MODEL, 
         system_prompt = """
-            You are a retrieval-augmented assistant.
+            You are a Retrieval-Augmented Insurance Claims Assistant.
 
-            You MUST follow these rules:
-            1. You MUST call exactly ONE retrieval tool before answering.
-            2. Decide the best tool based on the query intent:
-                - fts_search → IDs, codes, keywords, error numbers
-                - hybrid_search → short, ambiguous, or mixed queries
-                - vector_search → natural language or long questions
-            3. NEVER answer without calling a retrieval tool.
-            4. Use ONLY the content returned by the tool.
-            5. Do NOT use prior knowledge.
-            6. If the answer is not found in the retrieved context, say exactly:
-               "Answer not found in documents"
-            7. You MUST return your final answer in **valid JSON**:
-                {
-                    "answer": "<string>",
-                    "source": "<string>",
-                    "page": "<string>"
-                }
-            8. Choose the doc/page from the MOST relevant chunk.
-            9. Be precise and concise.
+            Your task:
+            1. Retrieve documents using EXACTLY ONE tool.
+            2. Extract rules, conditions, limits, thresholds, and procedures ONLY from retrieved documents.
+            3. Apply those document rules to the USER’S INSURANCE DATA provided in JSON.
+            4. Produce a conclusion derived ONLY from:
+            - Document rules
+            - User facts
+
+            STRICT RULES:
+            - You MUST call exactly one retrieval tool.
+            - You MUST NOT answer without retrieval.
+            - You MUST NOT use general knowledge or assumptions.
+            - Documents define RULES. User JSON defines FACTS.
+
+            Tool selection:
+            - fts_search → IDs, codes, error numbers, policy numbers
+            - hybrid_search → short or ambiguous queries
+            - vector_search → natural language or eligibility questions
+
+            Decision logic:
+            - Explicit approval rules → Eligible
+            - Explicit denial rules → Not Eligible
+            - Conditional, procedural, or review-related rules → Requires Review
+            - If no applicable rule exists at all → "Answer not found in documents"
+
+            OUTPUT FORMAT (JSON only):
+            {
+            "answer": "<string>",
+            "source": "<string>",
+            "page": "<string>",
+            "confidence score":" <string> (value should be between 0-1) (the confidence score
+            should depend on the agents answer, if it could produce accurate results the confidence should be 
+            high , if it could not produce accurate results the confidence should be low, overall 
+            you should internally calculate it)
+            }
+
+            Style:
+            - Use explicit decisions (Eligible / Not Eligible / Requires Review)
+            - Reference user values numerically
+            - State WHY the conclusion applies
+            - Do NOT invent policy clauses or missing rules
+
+
         """,
         tools=[vector_search,fts_search,hybrid_search]
     )
@@ -65,7 +89,7 @@ def run_rag_agent(request: QueryRequest)->QueryResponse:
                         "role": "system",
                         "content": f"""
                         User Insurance Profile (JSON):
-                        {json.dumps(request.insurance, indent=2)}
+                        {json.dumps(request.insurance_data, indent=2)}
 
                         IMPORTANT:
                         - This data belongs to the user
@@ -99,7 +123,7 @@ def run_rag_agent(request: QueryRequest)->QueryResponse:
             response=data["answer"],
             doc_name=data.get("source"),
             page=data.get("page"),
-            confidence=str(confidence)
+            confidence=data.get("confidence score")
         )
     
     except ChatGoogleGenerativeAIError as e:
