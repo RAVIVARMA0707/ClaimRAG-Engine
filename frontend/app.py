@@ -26,7 +26,8 @@ sample_json = """
     "deductible": 10000,
     "previous_claims_90_days": 2,
     "documents_submitted": ["Policy Copy", "Repair Estimate"],
-    "policy_status": "Active"
+    "policy_status": "Active",
+    "claimed_hospital_coverage":"5000"
   }
 }
 """
